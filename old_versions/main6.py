@@ -1,5 +1,5 @@
 # main.py
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template_string, redirect, url_for
 import onnxruntime as ort
 import pandas as pd
 import numpy as np
@@ -14,8 +14,8 @@ import math
 # --- Initialize Flask ---
 app = Flask(__name__)
 
-# --- Load ONNX model once at startup ---
-model_path = "model_gru.onnx"
+# --- Load ONNX model ---
+model_path = "../model_gru.onnx"
 session = ort.InferenceSession(model_path)
 input_name = session.get_inputs()[0].name
 output_name = session.get_outputs()[0].name
@@ -40,9 +40,26 @@ def fetch_eurusd_from_yfinance(period="1mo", interval="1h"):
 @app.route('/')
 def home():
     options = [1, 2, 3, 4, 5, 6]
-    return render_template('home.html', options=options)
+    option_html = ''.join([f'<option value="{m}">{m} Month{"s" if m > 1 else ""}</option>' for m in options])
 
-# --- GRU Prediction and Result page ---
+    html = f"""
+    <html>
+    <head><title>EURUSD Prediction</title></head>
+    <body>
+    <h1>EURUSD GRU Prediction</h1>
+    <form action="/gru/chart" method="get">
+        <label for="months">Select months:</label>
+        <select name="months" id="months">
+            {option_html}
+        </select>
+        <input type="submit" value="Predict">
+    </form>
+    </body>
+    </html>
+    """
+    return render_template_string(html)
+
+# --- GRU Prediction Chart route ---
 @app.route('/gru/chart')
 def gru_chart():
     # 1. Read 'months' from URL, default to 1 month
@@ -50,7 +67,7 @@ def gru_chart():
 
     # Validate months
     if months not in [1, 2, 3, 4, 5, 6]:
-        return "Invalid months value. Please choose between 1-6."
+        return "Invalid months value. Please use 1, 2, 3, 4, 5, or 6."
 
     # Convert months to yfinance period string
     period = f"{months}mo"
@@ -95,10 +112,11 @@ def gru_chart():
     rmse = math.sqrt(mse)
     mae = mean_absolute_error(real_close, preds_rescaled)
 
+    # 8. Calculate accuracy estimate (simple)
     mean_price = np.mean(real_close)
-    accuracy = max(0, 100 - (mae / mean_price * 100))  # Estimated %
+    accuracy = max(0, 100 - (mae / mean_price * 100))  # crude % accuracy estimate
 
-    # 8. Create chart
+    # 9. Plot
     fig, ax = plt.subplots(figsize=(14, 6))
     ax.plot(real_close, label="Actual Close", linewidth=2)
     ax.plot(preds_rescaled, label="Predicted Close", linestyle='--')
@@ -108,21 +126,31 @@ def gru_chart():
     ax.legend()
     ax.grid()
 
-    # 9. Save chart to buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
     image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     buf.close()
 
-    # 10. Render result.html
-    return render_template('result.html',
-        months=months,
-        image_base64=image_base64,
-        rmse=f"{rmse:.6f}",
-        mae=f"{mae:.6f}",
-        accuracy=f"{accuracy:.2f}"
-    )
+    # 10. Render HTML with chart + evaluation results
+    html = f"""
+    <html>
+    <head><title>GRU Prediction Chart</title></head>
+    <body>
+    <h1>EURUSD GRU Prediction (Last {months} Month{'s' if months > 1 else ''})</h1>
+    <img src="data:image/png;base64,{image_base64}" />
+    <p><b>Evaluation Results:</b></p>
+    <ul>
+      <li>RMSE: {rmse:.6f}</li>
+      <li>MAE: {mae:.6f}</li>
+      <li>Estimated Accuracy: {accuracy:.2f}%</li>
+    </ul>
+    <p><a href="/">Back to selection</a></p>
+    </body>
+    </html>
+    """
+
+    return render_template_string(html)
 
 # --- Run App ---
 if __name__ == "__main__":

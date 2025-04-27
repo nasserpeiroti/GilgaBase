@@ -1,73 +1,49 @@
-# main.py
-from flask import Flask, request, render_template_string
+from flask import Flask, request, jsonify, render_template_string
 import onnxruntime as ort
 import pandas as pd
 import numpy as np
-import yfinance as yf
 import matplotlib.pyplot as plt
 import io
 import base64
 from sklearn.preprocessing import MinMaxScaler
 
-# --- Initialize Flask ---
 app = Flask(__name__)
 
-# --- Load ONNX model ---
-model_path = "model_gru.onnx"
+# Load ONNX model
+model_path = "../model_gru.onnx"
 session = ort.InferenceSession(model_path)
 input_name = session.get_inputs()[0].name
 output_name = session.get_outputs()[0].name
 
 # --- Parameters ---
 window_size = 120
-fixed_symbol = "EURUSD=X"  # Always EURUSD
 
-# --- Function to fetch EURUSD Close prices ---
-def fetch_eurusd_from_yfinance(period="1mo", interval="1h"):
-    data = yf.download(tickers=fixed_symbol, interval=interval, period=period)
-
-    if data.empty:
-        raise ValueError("No data received from Yahoo Finance.")
-
-    data = data.reset_index()
-
-    df = data[['Datetime', 'Close']].rename(columns={'Datetime': 'time', 'Close': 'close'})
-    return df
-
-# --- Home page route ---
 @app.route('/')
 def home():
     return "Model is ready."
 
-# --- GRU Prediction Chart route ---
 @app.route('/gru/chart')
 def gru_chart():
-    # 1. Read 'months' from URL, default to 1 month
-    months = request.args.get('months', default=1, type=int)
-
-    # Validate months
-    if months not in [1, 2, 3, 4, 5, 6]:
-        return "Invalid months value. Please use 1, 2, 3, 4, 5, or 6."
-
-    # Convert months to yfinance period string
-    period = f"{months}mo"
-
-    # 2. Fetch live EURUSD Close data
+    # 1. Load EURUSD real Close data from CSV
     try:
-        df = fetch_eurusd_from_yfinance(period=period, interval="1h")
+        df = pd.read_csv("../eurusd_h1.csv")
     except Exception as e:
-        return f"Error fetching data: {str(e)}"
+        return f"Error loading CSV: {str(e)}"
 
     if df.empty:
         return "DataFrame is empty."
 
+    if 'time' not in df.columns or 'close' not in df.columns:
+        return "CSV must contain 'time' and 'close' columns."
+
+    df['time'] = pd.to_datetime(df['time'])
     close_prices = df['close'].values.reshape(-1, 1)
 
-    # 3. Scale ALL prices
+    # 2. Scale ALL prices first
     scaler = MinMaxScaler()
     scaled_close = scaler.fit_transform(close_prices)
 
-    # 4. Prepare sequences
+    # 3. Prepare sequences from scaled data
     def create_sequences(data, window_size):
         X = []
         for i in range(len(data) - window_size):
@@ -75,41 +51,38 @@ def gru_chart():
         return np.array(X)
 
     X = create_sequences(scaled_close, window_size)
-    if len(X) == 0:
-        return "Not enough data points for prediction."
-
     X = X.reshape((X.shape[0], window_size, 1))
 
-    # 5. Make predictions
+    # 4. Make predictions
     preds = session.run([output_name], {input_name: X.astype(np.float32)})[0]
     preds_rescaled = scaler.inverse_transform(preds)
 
-    # 6. Real close slice for comparison
+    # 5. Cut real close prices for comparison
     real_close = close_prices[window_size:]
 
-    # 7. Plot
+    # 6. Plot
     fig, ax = plt.subplots(figsize=(14, 6))
     ax.plot(real_close, label="Actual Close", linewidth=2)
     ax.plot(preds_rescaled, label="Predicted Close", linestyle='--')
-    ax.set_title(f"EURUSD Close Price Prediction (GRU Model, Last {months} Month{'s' if months > 1 else ''})")
+    ax.set_title("EURUSD Close Price Prediction (GRU Model)")
     ax.set_xlabel("Hours")
     ax.set_ylabel("Price")
     ax.legend()
     ax.grid()
 
-    # 8. Save plot
+    # 7. Save to buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
     image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     buf.close()
 
-    # 9. Render HTML
+    # 8. HTML Response
     html = f"""
     <html>
     <head><title>GRU Prediction Chart</title></head>
     <body>
-    <h1>EURUSD GRU Prediction (Last {months} Month{'s' if months > 1 else ''})</h1>
+    <h1>GRU Prediction vs Actual Close (EURUSD)</h1>
     <img src="data:image/png;base64,{image_base64}" />
     </body>
     </html>
@@ -117,6 +90,6 @@ def gru_chart():
 
     return render_template_string(html)
 
-# --- Run App ---
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

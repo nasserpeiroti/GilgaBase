@@ -14,14 +14,14 @@ from sklearn.preprocessing import MinMaxScaler
 app = Flask(__name__)
 
 # --- Load ONNX model once at server start ---
-model_path = "model_gru.onnx"
+model_path = "../model_gru.onnx"
 session = ort.InferenceSession(model_path)
 input_name = session.get_inputs()[0].name
 output_name = session.get_outputs()[0].name
 
 # --- Parameters ---
 window_size = 120
-fixed_symbol = "EURUSD=X"  # Always EURUSD
+fixed_symbol = "EURUSD=X"  # Always EURUSD now
 
 # --- Function to fetch live EURUSD data ---
 def fetch_data_from_yfinance(period="1mo", interval="1h"):
@@ -48,12 +48,12 @@ def gru_chart():
 
     # Map friendly periods to yfinance periods
     period_mapping = {
-        "today": ("1d", None),
-        "3d": ("5d", 3),
-        "1w": ("7d", None),
-        "1mo": ("1mo", None),
-        "3mo": ("3mo", None),
-        "6mo": ("6mo", None)
+        "today": ("1d", None),     # 1 day
+        "3d": ("5d", 3),           # fetch 5 days, filter 3 days
+        "1w": ("7d", None),        # 1 week
+        "1mo": ("1mo", None),      # 1 month
+        "3mo": ("3mo", None),      # 3 months
+        "6mo": ("6mo", None)       # 6 months
     }
 
     if period_friendly not in period_mapping:
@@ -61,7 +61,7 @@ def gru_chart():
 
     yf_period, days_filter = period_mapping[period_friendly]
 
-    interval = "1h"  # 1-hour candles (we downsample after fetch)
+    interval = "1h"  # Fixed 1-hour candles
 
     # 2. Fetch live EURUSD data
     try:
@@ -77,20 +77,13 @@ def gru_chart():
         last_time = df['time'].max()
         df = df[df['time'] > last_time - pd.Timedelta(days=days_filter)]
 
-    # 4. Remove weekends (Saturday=5, Sunday=6)
-    df['weekday'] = df['time'].dt.weekday
-    df = df[df['weekday'] < 5]  # Keep only Monday(0) to Friday(4)
-    df = df.drop(columns=['weekday'])
-
-    # 5. Downsample to 4-hour candles
-    df = df.set_index('time').resample('4H').last().dropna().reset_index()
-
-    # 6. Prepare data
     close_prices = df['close'].values.reshape(-1, 1)
 
+    # 4. Scaling
     scaler = MinMaxScaler()
     scaled_close = scaler.fit_transform(close_prices)
 
+    # 5. Prepare sequences
     def create_sequences(data, window_size):
         X = []
         for i in range(len(data) - window_size):
@@ -103,15 +96,15 @@ def gru_chart():
 
     X = X.reshape((X.shape[0], window_size, 1))
 
-    # 7. Predict
+    # 6. Predict
     preds = session.run([output_name], {input_name: X.astype(np.float32)})[0]
     preds_rescaled = scaler.inverse_transform(preds)
 
-    # 8. Time and real Close alignment
+    # 7. Time and real Close alignment
     times = df['time'].values[window_size:]
     real_close = close_prices[window_size:]
 
-    # 9. Plot
+    # 8. Plot
     fig, ax = plt.subplots(figsize=(14, 6))
     ax.plot(times, real_close, label="Actual Close", linewidth=2)
     ax.plot(times, preds_rescaled, label="Predicted Close", linestyle='--')
@@ -125,14 +118,14 @@ def gru_chart():
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d %H:%M'))
     fig.autofmt_xdate()
 
-    # 10. Save plot
+    # 9. Save plot
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
     image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     buf.close()
 
-    # 11. Render HTML
+    # 10. Render
     html = f"""
     <html>
     <head><title>GRU Prediction Chart</title></head>
