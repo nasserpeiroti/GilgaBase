@@ -1,0 +1,25 @@
+<!-- templates/home.html -->
+{% extends "base.html" %}
+
+{% block title %}Select a Model{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-5">Choose Your AI Model</h1>
+    <p class="lead">Select an AI model below to start your prediction.</p>
+</div>
+
+<div class="row justify-content-center">
+    {% for model in models %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ model.name }}</h5>
+                <p class="card-text">Model ID: <code>{{ model.id }}</code></p>
+                <a href="{{ url_for('model_parameters', model_id=model.id) }}" class="btn btn-primary mt-auto">Select Model</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

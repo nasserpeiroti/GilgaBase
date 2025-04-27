@@ -1,0 +1,27 @@
+<!-- templates/result.html -->
+{% extends "base.html" %}
+
+{% block title %}Prediction Results - {{ model_name }}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-5">Prediction Results - {{ model_name }}</h1>
+</div>
+
+<div class="text-center">
+    <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Prediction Chart" />
+</div>
+
+<div class="mt-5">
+    <h3 class="text-center">Evaluation Metrics</h3>
+    <ul class="list-group list-group-flush text-center">
+        <li class="list-group-item">RMSE: {{ rmse }}</li>
+        <li class="list-group-item">MAE: {{ mae }}</li>
+        <li class="list-group-item">Estimated Accuracy: {{ accuracy }}%</li>
+    </ul>
+</div>
+
+<div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-primary">Back to Home</a>
+</div>
+{% endblock %}

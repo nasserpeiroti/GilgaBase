@@ -1,0 +1,5 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/shahrza4/ai.gilgabase.com"
+PassengerBaseURI "/"
+PassengerPython "/home/shahrza4/virtualenv/ai.gilgabase.com/3.12/bin/python"
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END

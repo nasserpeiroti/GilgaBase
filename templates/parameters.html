@@ -1,0 +1,31 @@
+<!-- templates/parameters.html -->
+{% extends "base.html" %}
+
+{% block title %}Configure Model - {{ model_name }}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-5">Configure {{ model_name }}</h1>
+    <p class="lead">Set your prediction parameters below.</p>
+</div>
+
+<form method="post" action="{{ url_for('run_model', model_id=model_id) }}">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="start_date" class="form-label">Start Date:</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="end_date" class="form-label">End Date:</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" required>
+            </div>
+
+            <!-- Add more parameters later if needed -->
+
+            <button type="submit" class="btn btn-primary w-100">Run Prediction</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
