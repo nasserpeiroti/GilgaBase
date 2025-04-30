@@ -1,27 +1,97 @@
 <!-- templates/result.html -->
 {% extends "base.html" %}
 
-{% block title %}Prediction Results - {{ model_name }}{% endblock %}
+{% block title %}Result - {{ model_name }}{% endblock %}
 
 {% block content %}
 <div class="text-center mb-5">
-    <h1 class="display-5">Prediction Results - {{ model_name }}</h1>
+    <h1 class="display-5">{{ model_name }}</h1>
 </div>
 
-<div class="text-center">
-    <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Prediction Chart" />
-</div>
+{% if is_healthcare %}
+    <!-- Healthcare Model Report -->
+    <div class="container">
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Model</th>
+                    <th>Accuracy (%)</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model in model_results %}
+                <tr>
+                    <td>{{ model.name }}</td>
+                    <td>{{ model.accuracy }}</td>
+                    <td>{{ model.notes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-<div class="mt-5">
-    <h3 class="text-center">Evaluation Metrics</h3>
-    <ul class="list-group list-group-flush text-center">
-        <li class="list-group-item">RMSE: {{ rmse }}</li>
-        <li class="list-group-item">MAE: {{ mae }}</li>
-        <li class="list-group-item">Estimated Accuracy: {{ accuracy }}%</li>
-    </ul>
-</div>
+        <h4 class="mt-4">Final Recommendation</h4>
+        <p>
+            For production environments with high performance requirements, we recommend the <strong>Deep Learning</strong> model.
+            For interpretable and clinical-friendly applications, consider <strong>Random Forest</strong>.
+        </p>
 
+        <h5 class="mt-4">Resources</h5>
+        <ul>
+            <li><a href="{{ download_onnx }}" download>📥 Download Deep Learning ONNX Model</a></li>
+            <li><a href="{{ paper_link }}" target="_blank">📄 View Bayesian Network Research Paper</a></li>
+        </ul>
+    </div>
+
+{% elif is_risk_model %}
+    <!-- Risk Assessment Result -->
+    <div class="alert alert-{{ color }} text-center" role="alert">
+        <h4 class="alert-heading">{{ message }}</h4>
+        <p><strong>Average Risk Score:</strong> {{ risk_score }}</p>
+    </div>
+
+    <div class="text-center">
+        <h3 class="mb-4">Risk Score Over Time</h3>
+        <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Risk Prediction Chart">
+    </div>
+{% if download_link %}
 <div class="text-center mt-4">
-    <a href="/" class="btn btn-outline-primary">Back to Home</a>
+    <a href="{{ download_link }}" download class="btn btn-outline-success">
+        📥 Download ONNX Model
+    </a>
+</div>
+{% endif %}
+
+{% else %}
+    <!-- Price Prediction Result -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">Model Evaluation</h5>
+                    <p><strong>RMSE:</strong> {{ rmse }}</p>
+                    <p><strong>MAE:</strong> {{ mae }}</p>
+                    <p><strong>Estimated Accuracy:</strong> {{ accuracy }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <h3 class="mb-4">Predicted vs Actual Close Prices</h3>
+        <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Prediction Chart">
+    </div>
+{% if download_link %}
+<div class="text-center mt-4">
+    <a href="{{ download_link }}" download class="btn btn-outline-success">
+        📥 Download ONNX Model
+    </a>
+</div>
+{% endif %}
+
+{% endif %}
+
+<div class="text-center mt-5">
+    <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg">← Back to Models</a>
 </div>
 {% endblock %}
