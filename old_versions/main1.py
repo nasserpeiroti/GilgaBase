@@ -26,7 +26,7 @@ def home():
 def gru_chart():
     # 1. Load EURUSD real Close data from CSV
     try:
-        df = pd.read_csv("../eurusd_h1.csv")
+        df = pd.read_csv("../static/eurusd_h1.csv")
     except Exception as e:
         return f"Error loading CSV: {str(e)}"
 
