@@ -3,14 +3,15 @@ from flask import Flask, request, render_template, redirect, url_for
 import onnxruntime as ort
 import pandas as pd
 import numpy as np
-import requests
+import yfinance as yf
 import matplotlib.pyplot as plt
 import io
 import base64
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import math
-from datetime import datetime
+# Welcome to Alpha Vantage! Your API key is: 71HTUBU404R5VSZW. Please record this API key at a safe place for future data access.
+
 
 # --- Initialize Flask ---
 app = Flask(__name__)
@@ -28,37 +29,19 @@ output_name_risk = session_risk.get_outputs()[0].name
 
 # --- Parameters ---
 window_size = 120
-TWELVE_DATA_API_KEY = 'a6cab3620d2147dbbf1bf4fede6463f1'  # replace with your actual API key
-TWELVE_BASE_URL = 'https://api.twelvedata.com/time_series'
+fixed_symbol = "EURUSD=X"
 
-# --- Fetch EURUSD hourly prices from Twelve Data ---
-def fetch_eurusd_from_twelve_data(start, end):
-    params = {
-        "symbol": "EUR/USD",
-        "interval": "1h",
-        "apikey": TWELVE_DATA_API_KEY,
-        "start_date": str(start),
-        "end_date": str(end),
-        "format": "JSON",
-        "outputsize": 5000,
-        "timezone": "UTC"
-    }
+# --- Function to fetch EURUSD Close prices ---
+def fetch_eurusd_from_yfinance(start, end, interval="1h"):
+    data = yf.download(tickers=fixed_symbol, start=start, end=end, interval=interval)
 
-    response = requests.get(TWELVE_BASE_URL, params=params)
-    data = response.json()
+    if data.empty:
+        raise ValueError("No data received from Yahoo Finance.")
 
-    if "values" not in data:
-        raise ValueError("Error fetching data from Twelve Data. Details: " + str(data))
-
-    df = pd.DataFrame(data["values"])
-    df["time"] = pd.to_datetime(df["datetime"])
-    df["close"] = df["close"].astype(float)
-    df = df[["time", "close"]].sort_values("time").reset_index(drop=True)
-
-    if df.empty:
-        raise ValueError("No matching data in the given date range.")
-
+    data = data.reset_index()
+    df = data[['Datetime', 'Close']].rename(columns={'Datetime': 'time', 'Close': 'close'})
     return df
+
 
 # --- Home Page ---
 @app.route('/')
@@ -74,6 +57,7 @@ def home():
     }
     return render_template('home.html', model_categories=model_categories)
 
+
 # --- Model Parameters Page ---
 @app.route('/model/<model_id>', methods=['GET'])
 def model_parameters(model_id):
@@ -82,7 +66,7 @@ def model_parameters(model_id):
     model_name = model_id.replace('-', ' ').upper()
     return render_template('parameters.html', model_id=model_id, model_name=model_name)
 
-# --- Static Result Page ---
+
 @app.route('/result')
 def result():
     model_results = [
@@ -99,6 +83,7 @@ def result():
                            download_onnx=url_for('static', filename='model_cancer.onnx'),
                            paper_link=url_for('static', filename='breastCancer_paper.pdf'))
 
+
 # --- Run Model and Show Result ---
 @app.route('/model/<model_id>/run', methods=['POST'])
 def run_model(model_id):
@@ -109,9 +94,7 @@ def run_model(model_id):
         return "Start date and end date are required."
 
     try:
-        start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
-        end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
-        df = fetch_eurusd_from_twelve_data(start=start_dt, end=end_dt)
+        df = fetch_eurusd_from_yfinance(start=start_date, end=end_date)
     except Exception as e:
         return f"Error fetching data: {str(e)}"
 
@@ -119,9 +102,11 @@ def run_model(model_id):
         return "DataFrame is empty after fetching."
 
     close_prices = df['close'].values.reshape(-1, 1)
+
     scaler = MinMaxScaler()
     scaled_close = scaler.fit_transform(close_prices)
 
+    # Create sequences
     def create_sequences(data, window_size):
         X = []
         for i in range(len(data) - window_size):
@@ -134,9 +119,11 @@ def run_model(model_id):
 
     X = X.reshape((X.shape[0], window_size, 1))
 
+    # --- Risk Assessment Model ---
     if "risk" in model_id:
         preds = session_risk.run([output_name_risk], {input_name_risk: X.astype(np.float32)})[0]
 
+        # Plot risk predictions
         fig, ax = plt.subplots(figsize=(14, 6))
         ax.plot(preds, color='orange', label="Predicted Risk Score")
         ax.axhline(y=0.3, color='red', linestyle='--', label="High Risk Threshold")
@@ -156,9 +143,9 @@ def run_model(model_id):
         return render_template('result.html',
                                model_name="Risk Assessment Model",
                                is_risk_model=True,
-                               image_base64=image_base64,
-                               download_link=download_link)
+                               image_base64=image_base64,download_link=download_link)
 
+    # --- GRU Price Prediction Model ---
     elif "gru" in model_id:
         preds = session_price.run([output_name_price], {input_name_price: X.astype(np.float32)})[0]
         preds = scaler.inverse_transform(preds)
@@ -190,10 +177,11 @@ def run_model(model_id):
                                rmse=rmse,
                                mae=mae,
                                accuracy=acc,
-                               image_base64=image_base64,
-                               download_link=download_link)
+                               image_base64=image_base64,download_link=download_link)
 
+    # --- Unknown Model ---
     return f"Model '{model_id}' not recognized."
+
 
 # --- Run the App ---
 if __name__ == "__main__":
