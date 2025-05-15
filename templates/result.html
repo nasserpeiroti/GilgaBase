@@ -54,13 +54,54 @@
         <h3 class="mb-4">Risk Score Over Time</h3>
         <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Risk Prediction Chart">
     </div>
-{% if download_link %}
-<div class="text-center mt-4">
-    <a href="{{ download_link }}" download class="btn btn-outline-success">
-        📥 Download ONNX Model
-    </a>
-</div>
-{% endif %}
+    {% if download_link %}
+    <div class="text-center mt-4">
+        <a href="{{ download_link }}" download class="btn btn-outline-success">
+            📥 Download ONNX Model
+        </a>
+    </div>
+    {% endif %}
+
+{% elif is_behavioral_model %}
+    <!-- Call Behavior Heatmap Result -->
+    <div class="text-center">
+        <h3 class="mb-4">Behavioral Pattern Heatmap</h3>
+        <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Call Behavior Heatmap">
+    </div>
+
+    <div class="text-start mt-4">
+        <h4>📘 About This Model</h4>
+        <p>
+            This model analyzes your call history — collected from a mobile phone — to uncover behavioral patterns based on <strong>frequency</strong>,
+            <strong>seasonality</strong>, and <strong>call direction</strong>. It clusters your top contacts into three categories:
+        </p>
+        <ul>
+            <li><strong>Frequent</strong>: Regular, consistent communication</li>
+            <li><strong>Seasonal</strong>: Irregular or periodic communication patterns</li>
+            <li><strong>One-Way</strong>: Mostly incoming or outgoing with little balance</li>
+        </ul>
+        <p>
+            The heatmap visualizes these behaviors over time:
+        </p>
+        <ul>
+            <li><span style="color:#2a9d8f; font-weight:bold;">Green</span>: Frequent</li>
+            <li><span style="color:#f4a261; font-weight:bold;">Orange</span>: Seasonal</li>
+            <li><span style="color:#d3d3d3; font-weight:bold;">Gray</span>: One-Way</li>
+            <li><strong>Darker shade</strong>: More outgoing calls</li>
+            <li><strong>Lighter shade</strong>: More incoming calls</li>
+        </ul>
+        <p>
+            This tool is helpful for observing shifts in communication habits — useful for personal reflection, productivity, or digital well-being.
+        </p>
+    </div>
+
+    {% if download_link %}
+    <div class="text-center mt-4">
+        <a href="{{ download_link }}" download class="btn btn-outline-success">
+            📥 Download Heatmap Image
+        </a>
+    </div>
+    {% endif %}
 
 {% else %}
     <!-- Price Prediction Result -->
@@ -81,13 +122,13 @@
         <h3 class="mb-4">Predicted vs Actual Close Prices</h3>
         <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Prediction Chart">
     </div>
-{% if download_link %}
-<div class="text-center mt-4">
-    <a href="{{ download_link }}" download class="btn btn-outline-success">
-        📥 Download ONNX Model
-    </a>
-</div>
-{% endif %}
+    {% if download_link %}
+    <div class="text-center mt-4">
+        <a href="{{ download_link }}" download class="btn btn-outline-success">
+            📥 Download ONNX Model
+        </a>
+    </div>
+    {% endif %}
 
 {% endif %}
 

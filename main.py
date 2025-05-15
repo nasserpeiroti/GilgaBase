@@ -11,6 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import math
 from datetime import datetime
+import call_behavior_alpha
 
 # --- Initialize Flask ---
 app = Flask(__name__)
@@ -70,6 +71,9 @@ def home():
         ],
         "Healthcare": [
             {"id": "breast-cancer-dl", "name": "Breast Cancer Detection (Deep Learning)"}
+        ],
+        "Behavioral":[
+            {"id": "call-behavior", "name": "Call Behavior Heatmap"}
         ]
     }
     return render_template('home.html', model_categories=model_categories)
@@ -78,9 +82,13 @@ def home():
 @app.route('/model/<model_id>', methods=['GET'])
 def model_parameters(model_id):
     if model_id == "breast-cancer-dl":
-        return redirect(url_for('result'))
-    model_name = model_id.replace('-', ' ').upper()
-    return render_template('parameters.html', model_id=model_id, model_name=model_name)
+        return redirect(url_for('result'))  # still static page
+    elif model_id == "call-behavior":
+        return redirect(url_for('run_model', model_id="call-behavior"))  # ✅ redirect to dynamic generator
+    else:
+        model_name = model_id.replace('-', ' ').upper()
+        return render_template('parameters.html', model_id=model_id, model_name=model_name)
+
 
 # --- Static Result Page ---
 @app.route('/result')
@@ -100,8 +108,20 @@ def result():
                            paper_link=url_for('static', filename='breastCancer_paper.pdf'))
 
 # --- Run Model and Show Result ---
-@app.route('/model/<model_id>/run', methods=['POST'])
+@app.route('/model/<model_id>/run', methods=['POST', 'GET'])
 def run_model(model_id):
+    if model_id == "call-behavior":
+        try:
+            from call_behavior_alpha import generate_behavior_heatmap
+            image_base64 = generate_behavior_heatmap()
+            return render_template("result.html",
+                                   model_name="Call Behavior Heatmap",
+                                   is_behavioral_model=True,
+                                   image_base64=image_base64)
+        except Exception as e:
+            return f"Error running behavior model: {str(e)}"
+
+    # --- For GRU and Risk Models ---
     start_date = request.form.get('start_date')
     end_date = request.form.get('end_date')
 
@@ -123,10 +143,7 @@ def run_model(model_id):
     scaled_close = scaler.fit_transform(close_prices)
 
     def create_sequences(data, window_size):
-        X = []
-        for i in range(len(data) - window_size):
-            X.append(data[i:i + window_size])
-        return np.array(X)
+        return np.array([data[i:i + window_size] for i in range(len(data) - window_size)])
 
     X = create_sequences(scaled_close, window_size)
     if len(X) == 0:
@@ -162,7 +179,6 @@ def run_model(model_id):
     elif "gru" in model_id:
         preds = session_price.run([output_name_price], {input_name_price: X.astype(np.float32)})[0]
         preds = scaler.inverse_transform(preds)
-
         actual = close_prices[window_size:window_size + len(preds)]
 
         rmse = round(math.sqrt(mean_squared_error(actual, preds)), 4)
@@ -194,6 +210,7 @@ def run_model(model_id):
                                download_link=download_link)
 
     return f"Model '{model_id}' not recognized."
+
 
 # --- Run the App ---
 if __name__ == "__main__":
