@@ -117,7 +117,7 @@ def run_model(model_id):
             return render_template("result.html",
                                    model_name="Call Behavior Heatmap",
                                    is_behavioral_model=True,
-                                   image_base64=image_base64,download_apk=url_for('static', filename='apk-release.apk'))
+                                   image_base64=image_base64,download_apk=url_for('static', filename='app-release.apk'))
         except Exception as e:
             return f"Error running behavior model: {str(e)}"
 
