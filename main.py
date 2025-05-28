@@ -70,7 +70,7 @@ def home():
             {"id": "risk-assessment", "name": "Risk Assessment Model (MLP)"}
         ],
         "Healthcare": [
-            {"id": "breast-cancer-dl", "name": "Breast Cancer Detection (Deep Learning)"}
+            {"id": "Breast-cancer-dl", "name": "Breast Cancer Detection (Deep Learning)"}
         ],
         "Behavioral":[
             {"id": "call-behavior", "name": "Call Behavior Heatmap"}
