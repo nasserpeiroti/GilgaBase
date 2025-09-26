@@ -1,6 +1,6 @@
 # AI Models Platform
 
-🚀 **Live Demo:** [ai.gilgabase.com](https://ai.gilgabase.com)
+ **Live Demo:** [ai.gilgabase.com](https://ai.gilgabase.com)
 
 A comprehensive Flask-based platform hosting multiple production-ready AI models for financial analysis, medical diagnosis, and behavioral insights.
 
@@ -62,6 +62,6 @@ This platform includes implementation of our published research:
 
 ## 👤 Author
 
-**Amir Fallahi** - Senior Software Developer & AI Specialist
-- LinkedIn: [Profile](https://www.linkedin.com/in/amir-fallahi-6a3b7a23b/)
-- Email: cozan.developer@gmail.com
+**Nasser Peiroti** - DevOps & Cloud Computing Student
+- LinkedIn: (https://www.linkedin.com/in/nasser-peiroti-132492203/)
+
