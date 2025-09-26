@@ -12,6 +12,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import math
 from datetime import datetime
 import call_behavior_alpha
+import os
 
 # --- Initialize Flask ---
 app = Flask(__name__)
@@ -29,7 +30,8 @@ output_name_risk = session_risk.get_outputs()[0].name
 
 # --- Parameters ---
 window_size = 120
-TWELVE_DATA_API_KEY = 'a6cab3620d2147dbbf1bf4fede6463f1'  # replace with your actual API key
+# TWELVE_DATA_API_KEY = 'a6cab3620d2147dbbf1bf4fede6463f1'  # replace with your actual API key
+TWELVE_DATA_API_KEY = os.getenv('TWELVE_DATA_API_KEY', 'REPLACE_ME')
 TWELVE_BASE_URL = 'https://api.twelvedata.com/time_series'
 
 # --- Fetch EURUSD hourly prices from Twelve Data ---

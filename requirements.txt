@@ -1,0 +1,8 @@
+flask
+onnxruntime
+pandas
+numpy
+requests
+matplotlib
+scikit-learn
+gunicorn
