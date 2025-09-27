@@ -1,0 +1,20 @@
+# Environment variables
+.env
+config.py
+
+# Logs
+*.log
+
+# Data files
+*.csv
+
+# Server config
+.htaccess
+.well-known/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.idea/

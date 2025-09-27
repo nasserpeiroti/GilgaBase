@@ -1,0 +1,138 @@
+<!-- templates/result.html -->
+{% extends "base.html" %}
+
+{% block title %}Result - {{ model_name }}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <h1 class="display-5">{{ model_name }}</h1>
+</div>
+
+{% if is_healthcare %}
+    <!-- Healthcare Model Report -->
+    <div class="container">
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Model</th>
+                    <th>Accuracy (%)</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model in model_results %}
+                <tr>
+                    <td>{{ model.name }}</td>
+                    <td>{{ model.accuracy }}</td>
+                    <td>{{ model.notes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h4 class="mt-4">Final Recommendation</h4>
+        <p>
+            For production environments with high performance requirements, we recommend the <strong>Deep Learning</strong> model.
+            For interpretable and clinical-friendly applications, consider <strong>Random Forest</strong>.
+        </p>
+
+        <h5 class="mt-4">Resources</h5>
+        <ul>
+            <li><a href="{{ download_onnx }}" download>📥 Download Deep Learning ONNX Model</a></li>
+            <li><a href="{{ paper_link }}" target="_blank">📄 View Bayesian Network Research Paper</a></li>
+        </ul>
+    </div>
+
+{% elif is_risk_model %}
+    <!-- Risk Assessment Result -->
+    <div class="alert alert-{{ color }} text-center" role="alert">
+        <h4 class="alert-heading">{{ message }}</h4>
+        <p><strong>Average Risk Score:</strong> {{ risk_score }}</p>
+    </div>
+
+    <div class="text-center">
+        <h3 class="mb-4">Risk Score Over Time</h3>
+        <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Risk Prediction Chart">
+    </div>
+    {% if download_link %}
+    <div class="text-center mt-4">
+        <a href="{{ download_link }}" download class="btn btn-outline-success">
+            📥 Download ONNX Model
+        </a>
+    </div>
+    {% endif %}
+
+{% elif is_behavioral_model %}
+    <!-- Call Behavior Heatmap Result -->
+    <div class="text-center">
+        <h3 class="mb-4">Behavioral Pattern Heatmap</h3>
+        <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Call Behavior Heatmap">
+    </div>
+
+    <div class="text-start mt-4">
+        <h4>📘 About This Model</h4>
+        <p>
+            This model analyzes your call history — collected from a mobile phone — to uncover behavioral patterns based on <strong>frequency</strong>,
+            <strong>seasonality</strong>, and <strong>call direction</strong>. It clusters your top contacts into three categories:
+        </p>
+        <ul>
+            <li><strong>Frequent</strong>: Regular, consistent communication</li>
+            <li><strong>Seasonal</strong>: Irregular or periodic communication patterns</li>
+            <li><strong>One-Way</strong>: Mostly incoming or outgoing with little balance</li>
+        </ul>
+        <p>
+            The heatmap visualizes these behaviors over time:
+        </p>
+        <ul>
+            <li><span style="color:#2a9d8f; font-weight:bold;">Green</span>: Frequent</li>
+            <li><span style="color:#f4a261; font-weight:bold;">Orange</span>: Seasonal</li>
+            <li><span style="color:#d3d3d3; font-weight:bold;">Gray</span>: One-Way</li>
+            <li><strong>Darker shade</strong>: More outgoing calls</li>
+            <li><strong>Lighter shade</strong>: More incoming calls</li>
+        </ul>
+        <p>
+            This tool is helpful and good for observing shifts in communication habits — useful for personal reflection, productivity, or digital well-being.
+        </p>
+    </div>
+
+    {% if download_apk %}
+    <div class="text-center mt-4">
+        <a href="{{ download_apk }}" download class="btn btn-outline-success">
+            📥 Download mobile app
+        </a>
+    </div>
+    {% endif %}
+
+{% else %}
+    <!-- Price Prediction Result -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">Model Evaluation</h5>
+                    <p><strong>RMSE:</strong> {{ rmse }}</p>
+                    <p><strong>MAE:</strong> {{ mae }}</p>
+                    <p><strong>Estimated Accuracy:</strong> {{ accuracy }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <h3 class="mb-4">Predicted vs Actual Close Prices</h3>
+        <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Prediction Chart">
+    </div>
+    {% if download_link %}
+    <div class="text-center mt-4">
+        <a href="{{ download_link }}" download class="btn btn-outline-success">
+            📥 Download ONNX Model
+        </a>
+    </div>
+    {% endif %}
+
+{% endif %}
+
+<div class="text-center mt-5">
+    <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg">← Back to Models</a>
+</div>
+{% endblock %}

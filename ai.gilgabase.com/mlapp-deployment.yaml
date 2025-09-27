@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlapp-deployment
+  labels:
+    app: mlapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mlapp
+  template:
+    metadata:
+      labels:
+        app: mlapp
+    spec:
+      containers:
+      - name: mlapp
+        image: 869508798872.dkr.ecr.us-east-1.amazonaws.com/mlapp:1.0.0
+        ports:
+        - containerPort: 8000   # was 5000
+        env:
+        - name: TWELVE_DATA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: twelve-data-secret
+              key: TWELVE_DATA_API_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlapp-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: mlapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000   # was 5000
