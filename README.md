@@ -32,10 +32,10 @@ A comprehensive Flask-based platform hosting multiple production-ready AI models
 
 | Model | Accuracy | Technology | Status |
 |-------|----------|------------|--------|
-| EUR/USD Prediction | 97%+ | GRU + ONNX | ✅ Live |
-| Risk Assessment | 95%+ | MLP | ✅ Live |
-| Breast Cancer | 98.1% | Bayesian Network | ✅ Live |
-| Call Behavior | Real-time | Pattern Analysis | ✅ Live |
+| EUR/USD Prediction | 97%+ | GRU + ONNX |  Live |
+| Risk Assessment | 95%+ | MLP |  Live |
+| Breast Cancer | 98.1% | Bayesian Network |  Live |
+| Call Behavior | Real-time | Pattern Analysis |  Live |
 
 ## Live Demo
 
@@ -51,7 +51,7 @@ Visit [ai.gilgabase.com](https://ai.gilgabase.com) to try all models:
 Download the Flutter app for call behavior analysis:
 [ai.gilgabase.com/model/call-behavior/run](https://ai.gilgabase.com/model/call-behavior/run)
 
-## 📚 Research
+##  Research
 
 This platform includes implementation of our published research:
 - **Paper:** "An Expert System for Detection of Breast Cancer Using Data Preprocessing and Bayesian Network"
@@ -60,7 +60,7 @@ This platform includes implementation of our published research:
 
 
 
-## 👤 Author
+##  Author
 
 **Nasser Peiroti** - DevOps & Cloud Computing Student
 - LinkedIn: (https://www.linkedin.com/in/nasser-peiroti-132492203/)
